@@ -6,15 +6,18 @@
   "main": "app.js",
   "scripts": {
     "start": "node ./src/app.js",
-    "deploy": "node ./src/deploy-commands.js"
+    "deploy": "node ./src/deploy-commands.js",
+    "start:dev": "nodemon ./src/app.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "discord.js": "^14.14.1",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "yt-search": "^2.10.4"
   },
   "devDependencies": {
-    "eslint": "^8.56.0"
+    "eslint": "^8.56.0",
+    "nodemon": "^3.0.3"
   }
 }
