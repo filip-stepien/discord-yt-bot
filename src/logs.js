@@ -1,11 +1,11 @@
-import chalk from "chalk";
+import chalk from 'chalk';
 
 export function success(str) {
 	console.log(chalk.green.bold(str));
 }
 
 export function warn(str) {
-	console.log(chalk.yellow.bold(`[WARNING] ${str}`));
+	console.log(chalk.yellow.bold(`[WARN] ${str}`));
 }
 
 export function err(str) {

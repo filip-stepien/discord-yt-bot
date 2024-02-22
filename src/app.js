@@ -1,37 +1,28 @@
 import { Client, Collection, Events, GatewayIntentBits } from 'discord.js';
-import { fileURLToPath } from 'url';
 import { err, warn, success } from './logs.js';
-import fs from 'fs';
-import path from 'path';
+import { readdirSync } from 'fs';
+import { resolve } from 'path';
 import 'dotenv/config';
 
-function setCommands(client) {
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = path.dirname(__filename);
+async function setClientCommands(client) {
+    const commandsFolder = resolve('./src/commands');
+    const files = readdirSync(commandsFolder);
 
-    const mainPath = path.join(__dirname, '..');
-    const foldersPath = path.join(mainPath, 'commands');
-    const commandFolders = fs.readdirSync(foldersPath);
+    for (const file of files) {
+        const commandModule = await import(`./commands/${file}`);
+        const command = commandModule.default;
 
-    for (const folder of commandFolders) {
-        const commandsPath = path.join(foldersPath, folder);
-        const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
-        for (const file of commandFiles) {
-            const filePath = path.join(commandsPath, file);
-            const command = require(filePath);
-    
-            if ('data' in command && 'execute' in command) {
-                client.commands.set(command.data.name, command);
-            } else {
-                warn(`[WARNING] The command at ${filePath} is missing a required 'data' or 'execute' property.`);
-            }
+        if ('data' in command && 'execute' in command) {
+            client.commands.set(command.data.name, command);
+        } else {
+            warn(`The command at ${file} is missing a required 'data' or 'execute' property.`);
         }
     }
 }
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 client.commands = new Collection();
-setCommands(client);
+setClientCommands(client);
 
 client.login(process.env.TOKEN).catch(() => err('Token is invalid. Make sure .env file contains correct token.'));
 
