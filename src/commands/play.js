@@ -1,5 +1,12 @@
 import yts from 'yt-search';
-import { joinVoiceChannel, createAudioPlayer, NoSubscriberBehavior, createAudioResource } from '@discordjs/voice';
+import ytdl from 'ytdl-core';
+import { 
+    joinVoiceChannel, 
+    createAudioPlayer, 
+    NoSubscriberBehavior, 
+    createAudioResource, 
+    getVoiceConnection
+} from '@discordjs/voice';
 import { 
     ActionRowBuilder, 
     SlashCommandBuilder, 
@@ -7,7 +14,6 @@ import {
     StringSelectMenuBuilder, 
     ComponentType
 } from 'discord.js';
-import ytdl from 'ytdl-core';
 
 async function getSelectMenuRow(prompt) {
     const songs = await yts(prompt);
@@ -36,11 +42,22 @@ async function handleSelection(interaction, selectMenuRow) {
     });
 
     return new Promise(resolve => {
-        collector.on('collect', async i => {
-            await interaction.editReply({ content: i.values[0], components: [] });
-            resolve(i.values[0]);
-        });
+        collector.on('collect', i => resolve(i.values[0]));
     });
+}
+
+function connectToUserVoiceChannel(interaction) {
+    const vc = interaction.member.voice.channel;
+
+    if (vc) {
+        return joinVoiceChannel({ 
+            channelId: vc.id,
+            guildId: vc.guildId,
+            adapterCreator: vc.guild.voiceAdapterCreator
+        });
+    } else {
+        return null;
+    }
 }
 
 export default {
@@ -57,26 +74,29 @@ export default {
 
         const prompt = interaction.options.getString('prompt');
         const row = await getSelectMenuRow(prompt);
-
-        const vc = interaction.member.voice.channel;
-        const connection = joinVoiceChannel({ 
-            channelId: vc.id,
-            guildId: vc.guildId,
-            adapterCreator: vc.guild.voiceAdapterCreator
-        });
-
+        const url = await handleSelection(interaction, row);
+        const song = ytdl(url, { filter: 'audioonly' });
+        const resource = createAudioResource(song);
         const player = createAudioPlayer({
             behaviors: { noSubscriber: NoSubscriberBehavior.Stop }
         });
 
-        connection.subscribe(player);
-        
-        const url = await handleSelection(interaction, row);
-        const song = ytdl(url, { filter: 'audioonly' });
+        const connection = getVoiceConnection(interaction.member.voice.guildId) ?? connectToUserVoiceChannel(interaction);
 
-        const resource = createAudioResource(song);
-        player.play(resource);
+        if (connection) {
+            connection.subscribe(player);
+            player.play(resource);
 
-        player.on('error', e => console.log(e));
+            await interaction.editReply({ 
+                content: `**Now playing:**`,
+                components: []
+            });
+        } else {
+            await interaction.editReply({ 
+                content: 'You have to be on the voice channel to play music.',
+                ephemeral: true,
+                components: []
+            });
+        }
     }
 };

@@ -1,6 +1,6 @@
 import { Client, Collection, Events, GatewayIntentBits } from 'discord.js';
 import { err, warn, success } from './logs.js';
-import { readdirSync, createWriteStream } from 'fs';
+import { readdirSync } from 'fs';
 import { resolve } from 'path';
 import 'dotenv/config';
 
