@@ -1,4 +1,5 @@
 import { Client, Collection, Events, GatewayIntentBits } from 'discord.js';
+import { createAudioPlayer, NoSubscriberBehavior } from '@discordjs/voice';
 import { err, warn, success } from './logs.js';
 import { readdirSync } from 'fs';
 import { resolve } from 'path';
@@ -20,9 +21,25 @@ async function setClientCommands(client) {
     }
 }
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates] });
-client.commands = new Collection();
-setClientCommands(client);
+async function createClient() {
+    const client = new Client({ 
+        intents: [
+            GatewayIntentBits.Guilds, 
+            GatewayIntentBits.GuildVoiceStates
+        ] 
+    });
+
+    client.player = createAudioPlayer({
+        behaviors: { noSubscriber: NoSubscriberBehavior.Stop }
+    });
+
+    client.commands = new Collection();
+    setClientCommands(client);
+
+    return client;
+}
+
+const client = await createClient();
 
 client.login(process.env.TOKEN).catch(() => err('Token is invalid. Make sure .env file contains correct token.'));
 
