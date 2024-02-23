@@ -1,5 +1,6 @@
 import yts from 'yt-search';
 import ytdl from 'ytdl-core';
+import ytid from 'get-youtube-id';
 import { 
     joinVoiceChannel, 
     createAudioPlayer, 
@@ -60,6 +61,12 @@ function connectToUserVoiceChannel(interaction) {
     }
 }
 
+async function getSongTitle(url) {
+    const id = ytid(url);
+    const song = await yts({ videoId: id });
+    return song.title;
+}
+
 export default {
     data: new SlashCommandBuilder()
         .setName('play')
@@ -88,7 +95,7 @@ export default {
             player.play(resource);
 
             await interaction.editReply({ 
-                content: `**Now playing:**`,
+                content: `**Now playing:**\n[${await getSongTitle(url)}](${url})`,
                 components: []
             });
         } else {
