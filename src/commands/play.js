@@ -56,12 +56,7 @@ export default {
         const url = await handleSelection(interaction, row);
         const connected = playAudio(interaction, client, url);
 
-        if (connected) {
-            await interaction.editReply({ 
-                content: `**Now playing:**\n[${await getSongTitle(url)}](${url})`,
-                components: []
-            });
-        } else {
+        if (!connected) {
             await interaction.editReply({ 
                 content: 'You have to be on the voice channel to play music.',
                 ephemeral: true,

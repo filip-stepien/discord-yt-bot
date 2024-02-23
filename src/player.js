@@ -35,7 +35,7 @@ export function createPlayer(client) {
 
     player.on(AudioPlayerStatus.Idle, () => {
         if (client.queue.length > 0) {
-            playAudio(client.playerInteraction, client, client.queue[0]);
+            playAudio(client.lastPlayerInteraction, client, client.queue[0]);
             client.queue.shift();
         }
     });
@@ -49,7 +49,7 @@ export async function getSongTitle(url) {
     return song.title;
 }
 
-export function playAudio(interaction, client, url) {
+export async function playAudio(interaction, client, url) {
     const connection = getVoiceConnection(interaction.member.voice.guildId) ?? connectToUserVoiceChannel(interaction);
     if (!connection) return false;
 
@@ -59,9 +59,22 @@ export function playAudio(interaction, client, url) {
         const song = ytdl(url, { filter: 'audioonly' });
         const resource = createAudioResource(song);
         client.player.play(resource);
-        client.playerInteraction = interaction;
+        client.lastPlayerInteraction = interaction;
+
+        await interaction.editReply({ 
+            content: `**Now playing:**\n[${await getSongTitle(url)}](${url})`,
+            ephemeral: true,
+            components: []
+        });
     } else {
         client.queue.push(url);
+        await interaction.editReply({ 
+            content: `**Added to queue:**\n${await getSongTitle(url)}`,
+            ephemeral: true,
+            components: []
+        });
+
+        setTimeout(async () => await interaction.deleteReply(), 3000);
     }
 
     return true;

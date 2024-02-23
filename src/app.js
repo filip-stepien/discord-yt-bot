@@ -35,11 +35,10 @@ async function createClient() {
 
     client.commands = await getClientCommands();
     client.player = createPlayer(client);
-    client.playerInteraction = null;
+    client.lastPlayerInteraction = null;
     client.queue = [];
 
     return client;
-
 }
 
 const client = await createClient();
