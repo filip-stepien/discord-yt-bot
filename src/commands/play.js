@@ -1,5 +1,13 @@
-import { ActionRowBuilder, SlashCommandBuilder, StringSelectMenuOptionBuilder, StringSelectMenuBuilder, ComponentType } from 'discord.js';
 import yts from 'yt-search';
+import { joinVoiceChannel, createAudioPlayer, NoSubscriberBehavior, createAudioResource } from '@discordjs/voice';
+import { 
+    ActionRowBuilder, 
+    SlashCommandBuilder, 
+    StringSelectMenuOptionBuilder, 
+    StringSelectMenuBuilder, 
+    ComponentType
+} from 'discord.js';
+import ytdl from 'ytdl-core';
 
 async function getSelectMenuRow(prompt) {
     const songs = await yts(prompt);
@@ -27,9 +35,12 @@ async function handleSelection(interaction, selectMenuRow) {
         componentType: ComponentType.StringSelect 
     });
 
-    collector.on('collect', async i => 
-        await interaction.editReply({ content: i.values[0], components: [] })
-    );
+    return new Promise(resolve => {
+        collector.on('collect', async i => {
+            await interaction.editReply({ content: i.values[0], components: [] });
+            resolve(i.values[0]);
+        });
+    });
 }
 
 export default {
@@ -44,9 +55,28 @@ export default {
     async execute(interaction) {
         await interaction.deferReply();
 
-        const prompt = await interaction.options.getString('prompt');
+        const prompt = interaction.options.getString('prompt');
         const row = await getSelectMenuRow(prompt);
+
+        const vc = interaction.member.voice.channel;
+        const connection = joinVoiceChannel({ 
+            channelId: vc.id,
+            guildId: vc.guildId,
+            adapterCreator: vc.guild.voiceAdapterCreator
+        });
+
+        const player = createAudioPlayer({
+            behaviors: { noSubscriber: NoSubscriberBehavior.Stop }
+        });
+
+        connection.subscribe(player);
         
-        await handleSelection(interaction, row);
+        const url = await handleSelection(interaction, row);
+        const song = ytdl(url, { filter: 'audioonly' });
+
+        const resource = createAudioResource(song);
+        player.play(resource);
+
+        player.on('error', e => console.log(e));
     }
 };

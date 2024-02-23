@@ -1,6 +1,6 @@
 import { Client, Collection, Events, GatewayIntentBits } from 'discord.js';
 import { err, warn, success } from './logs.js';
-import { readdirSync } from 'fs';
+import { readdirSync, createWriteStream } from 'fs';
 import { resolve } from 'path';
 import 'dotenv/config';
 
@@ -20,7 +20,7 @@ async function setClientCommands(client) {
     }
 }
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates] });
 client.commands = new Collection();
 setClientCommands(client);
 
