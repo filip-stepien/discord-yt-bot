@@ -1,13 +1,4 @@
 import yts from 'yt-search';
-import ytdl from 'ytdl-core';
-import ytid from 'get-youtube-id';
-import { 
-    joinVoiceChannel, 
-    createAudioPlayer, 
-    NoSubscriberBehavior, 
-    createAudioResource, 
-    getVoiceConnection
-} from '@discordjs/voice';
 import { 
     ActionRowBuilder, 
     SlashCommandBuilder, 
@@ -15,6 +6,7 @@ import {
     StringSelectMenuBuilder, 
     ComponentType
 } from 'discord.js';
+import { playAudio, getSongTitle } from '../player.js';
 
 async function getSelectMenuRow(prompt) {
     const songs = await yts(prompt);
@@ -47,26 +39,6 @@ async function handleSelection(interaction, selectMenuRow) {
     });
 }
 
-function connectToUserVoiceChannel(interaction) {
-    const vc = interaction.member.voice.channel;
-
-    if (vc) {
-        return joinVoiceChannel({ 
-            channelId: vc.id,
-            guildId: vc.guildId,
-            adapterCreator: vc.guild.voiceAdapterCreator
-        });
-    } else {
-        return null;
-    }
-}
-
-async function getSongTitle(url) {
-    const id = ytid(url);
-    const song = await yts({ videoId: id });
-    return song.title;
-}
-
 export default {
     data: new SlashCommandBuilder()
         .setName('play')
@@ -76,24 +48,15 @@ export default {
                 .setDescription('Search by URL or term')
                 .setRequired(true)
         ),
-    async execute(interaction) {
+    async execute(client, interaction) {
         await interaction.deferReply();
 
         const prompt = interaction.options.getString('prompt');
         const row = await getSelectMenuRow(prompt);
         const url = await handleSelection(interaction, row);
-        const song = ytdl(url, { filter: 'audioonly' });
-        const resource = createAudioResource(song);
-        const player = createAudioPlayer({
-            behaviors: { noSubscriber: NoSubscriberBehavior.Stop }
-        });
+        const connected = playAudio(interaction, client, url);
 
-        const connection = getVoiceConnection(interaction.member.voice.guildId) ?? connectToUserVoiceChannel(interaction);
-
-        if (connection) {
-            connection.subscribe(player);
-            player.play(resource);
-
+        if (connected) {
             await interaction.editReply({ 
                 content: `**Now playing:**\n[${await getSongTitle(url)}](${url})`,
                 components: []

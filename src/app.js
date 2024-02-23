@@ -1,11 +1,13 @@
 import { Client, Collection, Events, GatewayIntentBits } from 'discord.js';
-import { createAudioPlayer, NoSubscriberBehavior } from '@discordjs/voice';
+import { createAudioPlayer, NoSubscriberBehavior, AudioPlayerStatus } from '@discordjs/voice';
 import { err, warn, success } from './logs.js';
 import { readdirSync } from 'fs';
 import { resolve } from 'path';
 import 'dotenv/config';
+import { createPlayer } from './player.js';
 
-async function setClientCommands(client) {
+async function getClientCommands() {
+    const commands = new Collection();
     const commandsFolder = resolve('./src/commands');
     const files = readdirSync(commandsFolder);
 
@@ -14,11 +16,13 @@ async function setClientCommands(client) {
         const command = commandModule.default;
 
         if ('data' in command && 'execute' in command) {
-            client.commands.set(command.data.name, command);
+            commands.set(command.data.name, command);
         } else {
             warn(`The command at ${file} is missing a required 'data' or 'execute' property.`);
         }
     }
+
+    return commands;
 }
 
 async function createClient() {
@@ -29,14 +33,13 @@ async function createClient() {
         ] 
     });
 
-    client.player = createAudioPlayer({
-        behaviors: { noSubscriber: NoSubscriberBehavior.Stop }
-    });
-
-    client.commands = new Collection();
-    setClientCommands(client);
+    client.commands = await getClientCommands();
+    client.player = createPlayer(client);
+    client.playerInteraction = null;
+    client.queue = [];
 
     return client;
+
 }
 
 const client = await createClient();
@@ -54,7 +57,7 @@ client.on(Events.InteractionCreate, async interaction => {
     if (!command) return;
 
     try {
-        await command.execute(interaction);
+        await command.execute(client, interaction);
     } catch (e) {
         console.log(e);
 
