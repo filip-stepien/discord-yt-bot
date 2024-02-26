@@ -1,10 +1,9 @@
 import { Client, Collection, Events, GatewayIntentBits } from 'discord.js';
-import { createAudioPlayer, NoSubscriberBehavior, AudioPlayerStatus } from '@discordjs/voice';
 import { err, warn, success } from './logs.js';
 import { readdirSync } from 'fs';
 import { resolve } from 'path';
-import 'dotenv/config';
 import { createPlayer } from './player.js';
+import 'dotenv/config';
 
 async function getClientCommands() {
     const commands = new Collection();

@@ -6,7 +6,7 @@ import {
     StringSelectMenuBuilder, 
     ComponentType
 } from 'discord.js';
-import { playAudio, getSongTitle } from '../player.js';
+import { playAudio } from '../player.js';
 
 async function getSelectMenuRow(prompt) {
     const songs = await yts(prompt);

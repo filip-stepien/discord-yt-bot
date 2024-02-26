@@ -9,6 +9,7 @@ import {
     AudioPlayerStatus, 
     NoSubscriberBehavior 
 } from '@discordjs/voice';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 
 function connectToUserVoiceChannel(interaction) {
     const vc = interaction.member.voice.channel;
@@ -26,6 +27,23 @@ function connectToUserVoiceChannel(interaction) {
 
 function playerBusy(client) {
     return client.player._state.status !== 'idle';
+}
+
+function getButton(id, emoji) {
+    return new ButtonBuilder()
+    .setCustomId(id)
+    .setEmoji(emoji)
+    .setStyle(ButtonStyle.Primary);
+}
+
+function getPlayerControlsRow() {
+    return new ActionRowBuilder().addComponents(
+        getButton('loop', '🔁'),
+        getButton('stop', '⏹️'),
+        getButton('pause', '⏸️'),
+        getButton('next', '⏩'),
+        getButton('jump', '⤵️')
+    );
 }
 
 export function createPlayer(client) {
@@ -58,19 +76,19 @@ export async function playAudio(interaction, client, url) {
     if (!playerBusy(client)) {
         const song = ytdl(url, { filter: 'audioonly' });
         const resource = createAudioResource(song);
+        const controls = getPlayerControlsRow();
+        
         client.player.play(resource);
         client.lastPlayerInteraction = interaction;
 
         await interaction.editReply({ 
             content: `**Now playing:**\n[${await getSongTitle(url)}](${url})`,
-            ephemeral: true,
-            components: []
+            components: [controls]
         });
     } else {
         client.queue.push(url);
         await interaction.editReply({ 
             content: `**Added to queue:**\n${await getSongTitle(url)}`,
-            ephemeral: true,
             components: []
         });
 
