@@ -52,14 +52,7 @@ export default {
         const prompt = interaction.options.getString('prompt');
         const row = await getSelectMenuRow(prompt);
         const url = await handleSelection(interaction, row);
-        const connected = await playAudio(interaction, client, url);
-
-        if (!connected) {
-            await interaction.editReply({ 
-                content: 'You have to be on the voice channel to play music.',
-                ephemeral: true,
-                components: []
-            });
-        }
+        
+        await playAudio(interaction, client, url);
     }
 };

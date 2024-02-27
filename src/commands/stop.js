@@ -1,12 +1,5 @@
 import { SlashCommandBuilder } from 'discord.js';
 
-async function editQueueStopReply(interaction) {
-    await interaction.editReply({
-        content: '**Player stopped - the queue has been cleared.**',
-        components: []
-    });
-}
-
 export default {
     data: new SlashCommandBuilder()
         .setName('stop')
@@ -15,6 +8,9 @@ export default {
         client.player.stop();
         client.queue = [];
 
-        await editQueueStopReply(interaction);
+        await interaction.editReply({
+            content: '**Player stopped - the queue has been cleared.**',
+            components: []
+        });
     }
 };

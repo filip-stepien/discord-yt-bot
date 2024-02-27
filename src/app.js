@@ -2,7 +2,7 @@ import { Client, Collection, Events, GatewayIntentBits } from 'discord.js';
 import { err, warn, success } from './logs.js';
 import { readdirSync } from 'fs';
 import { resolve } from 'path';
-import { createPlayer } from './player.js';
+import { createPlayer, isUserConnectedToVc } from './player.js';
 import 'dotenv/config';
 
 async function getClientCommands() {
@@ -54,16 +54,30 @@ client.on(Events.InteractionCreate, async interaction => {
     const command = interaction.client.commands.get(interaction.commandName);
     if (!command) return;
 
+    if (!isUserConnectedToVc(interaction)) {
+        await interaction.followUp({ 
+            content: '**You have to be connected to voice channel to use this command!**', 
+            ephemeral: true 
+        });
+
+        return;
+    }
+
     try {
         await interaction.deferReply();
         await command.execute(client, interaction);
     } catch (e) {
-        console.log(e);
+        err(e);
+
+        const interactionOptions = {
+            content: 'There was an error while executing this command!', 
+            ephemeral: true 
+        };
 
         if (interaction.replied || interaction.deferred) {
-			await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+			await interaction.followUp(interactionOptions);
 		} else {
-			await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+			await interaction.reply(interactionOptions);
 		}
     }
 });

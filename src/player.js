@@ -70,6 +70,10 @@ async function editQueueAddReply(interaction, url) {
     setTimeout(async () => await interaction.deleteReply(), 3000);
 }
 
+export async function isUserConnectedToVc(interaction) {
+    return interaction.member.voice.channelId;
+}
+
 export async function editQueueEndReply(interaction) {
     await interaction.editReply({ 
         content: '**The queue has ended.**',
@@ -94,7 +98,6 @@ export function createPlayer(client) {
 
 export async function playAudio(interaction, client, url) {
     const connection = getVoiceConnection(interaction.member.voice.guildId) ?? connectToUserVoiceChannel(interaction);
-    if (!connection) return false;
 
     connection.subscribe(client.player);
 
@@ -112,6 +115,4 @@ export async function playAudio(interaction, client, url) {
         client.queue.push(url);
         editQueueAddReply(interaction, url);
     }
-
-    return true;
 }
