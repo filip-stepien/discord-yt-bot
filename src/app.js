@@ -55,6 +55,7 @@ client.on(Events.InteractionCreate, async interaction => {
     if (!command) return;
 
     try {
+        await interaction.deferReply();
         await command.execute(client, interaction);
     } catch (e) {
         console.log(e);

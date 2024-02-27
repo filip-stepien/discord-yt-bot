@@ -1,3 +1,4 @@
+import { playAudio } from '../player.js';
 import yts from 'yt-search';
 import { 
     ActionRowBuilder, 
@@ -6,7 +7,6 @@ import {
     StringSelectMenuBuilder, 
     ComponentType
 } from 'discord.js';
-import { playAudio } from '../player.js';
 
 async function getSelectMenuRow(prompt) {
     const songs = await yts(prompt);
@@ -49,8 +49,6 @@ export default {
                 .setRequired(true)
         ),
     async execute(client, interaction) {
-        await interaction.deferReply();
-
         const prompt = interaction.options.getString('prompt');
         const row = await getSelectMenuRow(prompt);
         const url = await handleSelection(interaction, row);
