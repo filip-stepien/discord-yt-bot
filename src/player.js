@@ -26,7 +26,7 @@ function connectToUserVoiceChannel(interaction) {
 }
 
 function playerBusy(client) {
-    return client.player._state.status !== 'idle';
+    return client.player._state.status !== 'idle' && client.player._state.status != 'paused';
 }
 
 function getButton(id, emoji) {
@@ -46,6 +46,37 @@ function getPlayerControlsRow() {
     );
 }
 
+async function getSongTitle(url) {
+    const id = ytid(url);
+    const song = await yts({ videoId: id });
+    return song.title;
+}
+
+async function editCurrentSongReply(interaction, url) {
+    const title = await getSongTitle(url);
+    await interaction.editReply({ 
+        content: `**Now playing:**\n[${title}](${url})`,
+        components: []
+    });
+}
+
+async function editQueueAddReply(interaction, url) {
+    const title = await getSongTitle(url);
+    await interaction.editReply({ 
+        content: `**Added to queue:**\n${title}`,
+        components: []
+    });
+
+    setTimeout(async () => await interaction.deleteReply(), 3000);
+}
+
+export async function editQueueEndReply(interaction) {
+    await interaction.editReply({ 
+        content: '**The queue has ended.**',
+        components: []
+    });
+}
+
 export function createPlayer(client) {
     const player = createAudioPlayer({
         behaviors: { noSubscriber: NoSubscriberBehavior.Stop }
@@ -61,12 +92,6 @@ export function createPlayer(client) {
     return player;
 }
 
-export async function getSongTitle(url) {
-    const id = ytid(url);
-    const song = await yts({ videoId: id });
-    return song.title;
-}
-
 export async function playAudio(interaction, client, url) {
     const connection = getVoiceConnection(interaction.member.voice.guildId) ?? connectToUserVoiceChannel(interaction);
     if (!connection) return false;
@@ -76,23 +101,16 @@ export async function playAudio(interaction, client, url) {
     if (!playerBusy(client)) {
         const song = ytdl(url, { filter: 'audioonly' });
         const resource = createAudioResource(song);
-        const controls = getPlayerControlsRow();
+        //const controls = getPlayerControlsRow();
         
+        client.player.unpause();
         client.player.play(resource);
         client.lastPlayerInteraction = interaction;
 
-        await interaction.editReply({ 
-            content: `**Now playing:**\n[${await getSongTitle(url)}](${url})`,
-            components: [controls]
-        });
+        editCurrentSongReply(interaction, url);
     } else {
         client.queue.push(url);
-        await interaction.editReply({ 
-            content: `**Added to queue:**\n${await getSongTitle(url)}`,
-            components: []
-        });
-
-        setTimeout(async () => await interaction.deleteReply(), 3000);
+        editQueueAddReply(interaction, url);
     }
 
     return true;

@@ -54,7 +54,7 @@ export default {
         const prompt = interaction.options.getString('prompt');
         const row = await getSelectMenuRow(prompt);
         const url = await handleSelection(interaction, row);
-        const connected = playAudio(interaction, client, url);
+        const connected = await playAudio(interaction, client, url);
 
         if (!connected) {
             await interaction.editReply({ 
