@@ -26,7 +26,7 @@ function connectToUserVoiceChannel(interaction) {
 }
 
 function playerBusy(client) {
-    return client.player._state.status !== 'idle' && client.player._state.status != 'paused';
+    return client.player._state.status !== 'idle' && client.player._state.status !== 'paused';
 }
 
 function getButton(id, emoji) {
@@ -70,7 +70,15 @@ async function editQueueAddReply(interaction, url) {
     setTimeout(async () => await interaction.deleteReply(), 3000);
 }
 
-export async function isUserConnectedToVc(interaction) {
+export function isPlaying(client) {
+    return client.player._state.status === 'playing';
+}
+
+export function isPaused(client) {
+    return client.player._state.status === 'paused';
+}
+
+export function isUserConnectedToVc(interaction) {
     return interaction.member.voice.channelId;
 }
 
