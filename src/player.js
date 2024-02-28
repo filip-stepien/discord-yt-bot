@@ -70,6 +70,21 @@ async function editQueueAddReply(interaction, url) {
     setTimeout(async () => await interaction.deleteReply(), 3000);
 }
 
+async function playAudio(interaction, client, url) {
+    const song = ytdl(url, { filter: 'audioonly' });
+    const resource = createAudioResource(song);
+    
+    client.player.play(resource);
+    client.lastPlayerInteraction = interaction;
+
+    await editCurrentSongReply(interaction, url);
+}
+
+export async function addToQueue(interaction, client, url) {
+    client.queue.push(url);
+    await editQueueAddReply(interaction, url);
+}
+
 export function isPlaying(client) {
     return client.player._state.status === 'playing';
 }
@@ -94,33 +109,26 @@ export function createPlayer(client) {
         behaviors: { noSubscriber: NoSubscriberBehavior.Stop }
     });
 
-    player.on(AudioPlayerStatus.Idle, () => {
+    player.on(AudioPlayerStatus.Idle, async () => {
         if (client.queue.length > 0) {
-            playAudio(client.lastPlayerInteraction, client, client.queue[0]);
+            await handleSongPlay(client.lastPlayerInteraction, client, client.queue[0]);
             client.queue.shift();
+        } else {
+            await editQueueEndReply(client.lastPlayerInteraction);
         }
     });
 
     return player;
 }
 
-export async function playAudio(interaction, client, url) {
+export async function handleSongPlay(interaction, client, url) {
     const connection = getVoiceConnection(interaction.member.voice.guildId) ?? connectToUserVoiceChannel(interaction);
 
     connection.subscribe(client.player);
 
     if (!playerBusy(client)) {
-        const song = ytdl(url, { filter: 'audioonly' });
-        const resource = createAudioResource(song);
-        //const controls = getPlayerControlsRow();
-        
-        client.player.unpause();
-        client.player.play(resource);
-        client.lastPlayerInteraction = interaction;
-
-        editCurrentSongReply(interaction, url);
+        await playAudio(interaction, client, url);
     } else {
-        client.queue.push(url);
-        editQueueAddReply(interaction, url);
+        await addToQueue(interaction, client, url);
     }
 }

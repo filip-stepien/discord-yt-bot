@@ -1,16 +1,24 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { playAudio, editQueueEndReply } from '../player.js';
+import { editQueueEndReply, addToQueue } from '../player.js';
+
+async function editSkipReply(interaction) {
+    await interaction.editReply({
+        content: '**Skipped!**',
+        components: []
+    });
+
+    setTimeout(async () => await interaction.deleteReply(), 1000);
+}
 
 export default {
     data: new SlashCommandBuilder()
         .setName('skip')
         .setDescription('Skips current song'),
     async execute(client, interaction) {
-        client.player.pause();
+        client.player.stop();
         
-        const url = client.queue.length > 0 ? client.queue[0] : null;
-        if (url) {
-            await playAudio(interaction, client, url);
+        if (client.queue.length > 0) {
+            await editSkipReply(interaction);
         } else {
             await editQueueEndReply(interaction);
         }

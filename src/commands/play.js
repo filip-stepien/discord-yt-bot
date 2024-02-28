@@ -1,4 +1,4 @@
-import { playAudio } from '../player.js';
+import { handleSongPlay } from '../player.js';
 import yts from 'yt-search';
 import { 
     ActionRowBuilder, 
@@ -53,6 +53,6 @@ export default {
         const row = await getSelectMenuRow(prompt);
         const url = await handleSelection(interaction, row);
         
-        await playAudio(interaction, client, url);
+        await handleSongPlay(interaction, client, url);
     }
 };
