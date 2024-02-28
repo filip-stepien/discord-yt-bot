@@ -81,3 +81,13 @@ client.on(Events.InteractionCreate, async interaction => {
 		}
     }
 });
+
+function didClientDisconnect(botClient, oldState, newState) {
+    return oldState.channelId && !newState.channelId && newState.id === botClient.user.id;
+}
+
+client.on('voiceStateUpdate', async (oldState, newState) => {
+    if (didClientDisconnect(client, oldState, newState)) {
+        client.queue = [];
+    }
+});

@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { editQueueEndReply, addToQueue } from '../player.js';
+import { editQueueEndReply } from '../player.js';
 
 async function editSkipReply(interaction) {
     await interaction.editReply({
