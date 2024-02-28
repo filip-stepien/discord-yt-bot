@@ -67,7 +67,7 @@ async function editQueueAddReply(interaction, url) {
         components: []
     });
 
-    setTimeout(async () => await interaction.deleteReply(), 3000);
+    setTimeout(async () => await interaction.deleteReply(), 2000);
 }
 
 async function playAudio(interaction, client, url) {
